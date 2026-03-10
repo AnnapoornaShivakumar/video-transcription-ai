@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  video-transcriber:
+    build: .
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./uploads:/app/uploads
+      - ./transcripts:/app/transcripts
+
+    environment:
+      - UPLOAD_FOLDER=/app/uploads
+      - TRANSCRIPT_FOLDER=/app/transcripts

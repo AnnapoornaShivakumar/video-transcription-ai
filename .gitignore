@@ -1,0 +1,33 @@
+# Python virtual environments
+venv/
+venv310/
+backend_transcription/venv310/
+
+# Node modules
+node_modules/
+frontend_transcription/node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Angular
+.angular/
+dist/
+
+# Environment variables
+.env
+
+# Generated media
+backend_transcription/static/audio/
+backend_transcription/static/images/
+backend_transcription/static/videos/
+
+# Uploads and temp files
+backend_transcription/uploads/
+backend_transcription/transcripts/
+backend_transcription/temp/
+
+# OS
+.DS_Store
+Thumbs.db

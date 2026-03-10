@@ -1,0 +1,112 @@
+<div class="page">
+
+  <div class="card">
+
+    <h1>🎬 Video Transcription</h1>
+
+    <p class="subtitle">
+      Upload a video to get transcript OR upload a document to generate video
+    </p>
+
+    <div class="upload-area">
+
+      <input type="file" (change)="onFileSelected($event)" />
+
+      <button (click)="uploadFile()">
+        Upload File
+      </button>
+
+    </div>
+
+
+    <!-- ⭐ FILE DETECTION INFO -->
+
+    <div *ngIf="selectedFile" class="file-info">
+
+      <span class="file-icon">
+        {{fileTypeIcon}}
+      </span>
+
+      <span class="file-name">
+        {{selectedFile.name}}
+      </span>
+
+    </div>
+
+    <p *ngIf="statusMessage" class="status-message">
+      {{statusMessage}}
+    </p>
+
+
+    <!-- Loading -->
+
+    <div *ngIf="isUploading" class="loading">
+
+      <div class="progress-circle">
+
+        <svg width="50" height="50"></svg>
+
+        <div class="spinner"></div>
+
+        <p class="progress-label">
+          Processing {{progress}}%
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- Transcript Result -->
+
+    <div *ngIf="transcriptText" class="result">
+
+      <div class="transcript-header">
+
+        <h3>Transcript</h3>
+
+        <a
+          *ngIf="downloadUrl"
+          [href]="downloadUrl"
+          class="download-btn"
+          download>
+
+          ⬇ Download
+
+        </a>
+
+      </div>
+
+      <div class="transcript-box">
+        <pre>{{ transcriptText }}</pre>
+      </div>
+
+    </div>
+
+
+    <!-- Generated Video -->
+
+    <div *ngIf="videoUrl" class="result">
+
+      <h3>Generated Video</h3>
+
+      <video width="500" controls>
+        <source [src]="videoUrl" type="video/mp4">
+      </video>
+
+      <br><br>
+
+      <a
+        [href]="videoUrl"
+        class="download-btn"
+        download>
+
+        ⬇ Download Video
+
+      </a>
+
+    </div>
+
+  </div>
+
+</div>

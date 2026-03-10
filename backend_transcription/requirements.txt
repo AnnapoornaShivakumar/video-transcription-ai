@@ -1,0 +1,29 @@
+fastapi
+uvicorn[standard]
+python-multipart
+
+# AI transcription
+faster-whisper
+ctranslate2
+numpy
+
+# video processing
+moviepy==1.0.3
+pillow==9.5.0
+pydub==0.25.1
+
+# HTTP requests
+requests
+
+# text-to-speech
+gTTS
+
+# document parsing
+python-docx
+PyPDF2
+
+# environment variables
+python-dotenv
+
+# LLM
+openai

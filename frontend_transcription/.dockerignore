@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+.angular
+
+# IDEs
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Test files
+*.spec.ts
+*.spec.js
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Environment files (optional - uncomment if needed)
+# .env
+# .env.local
+# .env.*.local
+
