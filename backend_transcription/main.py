@@ -214,23 +214,27 @@ def process_video(video_id, video_path):
         total_chunks = len(chunk_paths)
         completed_chunks = 0
         total_duration = get_audio_duration(audio_path)
+        processed_offset = 0
+        offsets = []
+
+        # calculate offsets first
+        for chunk_path in chunk_paths:
+            offsets.append(processed_offset)
+            processed_offset += get_audio_duration(chunk_path)
+
         with ThreadPoolExecutor(max_workers=2) as executor:
-
-            processed_offset = 0
-
-            for chunk_path in chunk_paths:
-
-                chunk_lines = transcribe_chunk(
+            futures = [
+                executor.submit(
+                    transcribe_chunk,
                     chunk_path,
                     video_id,
                     total_duration,
-                    processed_offset
+                    offset
                 )
-
-                transcript_lines.extend(chunk_lines)
-
-                chunk_duration = get_audio_duration(chunk_path)
-                processed_offset += chunk_duration
+                for chunk_path, offset in zip(chunk_paths, offsets)
+            ]
+            for future in as_completed(futures):
+                transcript_lines.extend(future.result())
 
         transcript_text = "\n".join(transcript_lines)
 
@@ -244,7 +248,6 @@ def process_video(video_id, video_path):
         with open(transcript_path, "w", encoding="utf-8") as f:
             f.write(f"# VIDEO_ID: {video_id}\n")
             f.write(transcript_text.strip())
-
         progress_tracker[video_id] = 100
 
     finally:
