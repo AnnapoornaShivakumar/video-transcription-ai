@@ -18,16 +18,19 @@ dist/
 # Environment variables
 .env
 
-# Generated media
+# Generated media (old structure)
 backend_transcription/static/audio/
 backend_transcription/static/images/
 backend_transcription/static/videos/
 
-# Uploads and temp files
+# Uploads and temporary files
 backend_transcription/uploads/
 backend_transcription/transcripts/
 backend_transcription/temp/
 
-# OS
+# New storage folder
+data/
+
+# OS files
 .DS_Store
 Thumbs.db

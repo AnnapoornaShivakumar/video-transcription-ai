@@ -85,26 +85,18 @@
 
 
     <!-- Generated Video -->
+  <div *ngIf="videoUrl && !isUploading" class="video-section">
 
-    <div *ngIf="videoUrl" class="result">
+    <h3>Generated Video</h3>
 
-      <h3>Generated Video</h3>
+    <video controls class="generated-video">
+      <source [src]="videoUrl" type="video/mp4">
+    </video>
 
-      <video width="500" controls>
-        <source [src]="videoUrl" type="video/mp4">
-      </video>
-
-      <br><br>
-
-      <a
-        [href]="videoUrl"
-        class="download-btn"
-        download>
-
-        ⬇ Download Video
-
+    <div class="download-container">
+      <a [href]="videoUrl" download class="download-btn">
+        ↓ Download Video
       </a>
-
     </div>
 
   </div>

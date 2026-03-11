@@ -5,224 +5,360 @@ import { ChangeDetectorRef } from '@angular/core';
 import { API_BASE_URL } from '../config';
 
 @Component({
-  selector: 'app-upload',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './upload.html',
-  styleUrls: ['./upload.css']
+selector: 'app-upload',
+standalone: true,
+imports: [CommonModule],
+templateUrl: './upload.html',
+styleUrls: ['./upload.css']
 })
 export class UploadComponent {
 
-  selectedFile: File | null = null;
+selectedFile: File | null = null;
 
-  isUploading = false;
+isUploading = false;
 
-  transcriptText: string = '';
-  downloadUrl: string = '';
+transcriptText: string = '';
+downloadUrl: string = '';
 
-  videoUrl: string = '';
+videoUrl: string = '';
 
-  progress = 0;
-  progressTimer: any;
-  videoId: string = '';
+progress = 0;
+progressTimer: any;
+videoId: string = '';
 
-  radius = 15;
-  circumference = 2 * Math.PI * this.radius;
-  offset = this.circumference;
+radius = 15;
+circumference = 2 * Math.PI * this.radius;
+offset = this.circumference;
 
-  // ⭐ NEW
-  fileTypeIcon = "";
-  statusMessage = "";
+fileTypeIcon = "";
+statusMessage = "";
 
-  constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
+constructor(private http: HttpClient, private cd: ChangeDetectorRef) {}
 
-  onFileSelected(event: any) {
+onFileSelected(event: any) {
 
-    this.selectedFile = event.target.files[0];
+this.selectedFile = event.target.files[0];
 
-    if (!this.selectedFile) return;
+if (!this.selectedFile) return;
 
-    const name = this.selectedFile.name.toLowerCase();
+const name = this.selectedFile.name.toLowerCase();
 
-    if (name.endsWith(".mp4") || name.endsWith(".mov") || name.endsWith(".avi") || name.endsWith(".mkv")) {
-      this.fileTypeIcon = "🎥";
-      this.statusMessage = "Video detected. Click upload to generate transcript.";
-    }
+if (name.endsWith(".mp4") || name.endsWith(".mov") || name.endsWith(".avi") || name.endsWith(".mkv")) {
+  this.fileTypeIcon = "🎥";
+  this.statusMessage = "Video detected. Click upload to generate transcript.";
+}
 
-    else if (name.endsWith(".pdf")) {
-      this.fileTypeIcon = "📕";
-      this.statusMessage = "PDF detected. Video will be generated from document.";
-    }
+else if (name.endsWith(".pdf")) {
+  this.fileTypeIcon = "📕";
+  this.statusMessage = "PDF detected. Video will be generated from document.";
+}
 
-    else if (name.endsWith(".docx")) {
-      this.fileTypeIcon = "📘";
-      this.statusMessage = "Word document detected. Video will be generated.";
-    }
+else if (name.endsWith(".docx")) {
+  this.fileTypeIcon = "📘";
+  this.statusMessage = "Word document detected. Video will be generated.";
+}
 
-    else if (name.endsWith(".txt")) {
-      this.fileTypeIcon = "📄";
-      this.statusMessage = "Text document detected. Video will be generated.";
-    }
+else if (name.endsWith(".txt")) {
+  this.fileTypeIcon = "📄";
+  this.statusMessage = "Text document detected.";
+}
 
-    else {
-      this.fileTypeIcon = "❓";
-      this.statusMessage = "Unsupported file type.";
-    }
+else {
+  this.fileTypeIcon = "❓";
+  this.statusMessage = "Unsupported file type.";
+}
 
-  }
+}
 
-  uploadFile() {
+// uploadFile() {
 
-    if (!this.selectedFile) {
-      alert("Please select a file");
-      return;
-    }
+// if (!this.selectedFile) {
+//   alert("Please select a file");
+//   return;
+// }
 
-    const fileName = this.selectedFile.name.toLowerCase();
+// const file = this.selectedFile;
+// const fileName = file.name.toLowerCase();
 
-    const isVideo =
-      fileName.endsWith(".mp4") ||
-      fileName.endsWith(".mov") ||
-      fileName.endsWith(".avi") ||
-      fileName.endsWith(".mkv");
+// const isVideo =
+//   fileName.endsWith(".mp4") ||
+//   fileName.endsWith(".mov") ||
+//   fileName.endsWith(".avi") ||
+//   fileName.endsWith(".mkv") ||
+//   fileName.endsWith(".webm");
 
-    const isDocument =
-      fileName.endsWith(".txt") ||
-      fileName.endsWith(".pdf") ||
-      fileName.endsWith(".docx");
+// const isDocument =
+//   fileName.endsWith(".txt") ||
+//   fileName.endsWith(".pdf") ||
+//   fileName.endsWith(".docx");
 
-    if (isVideo) {
-      this.uploadVideo();
-    }
-    else if (isDocument) {
+// // VIDEO → transcription
+// if (isVideo) {
+//   this.uploadVideo();
+//   return;
+// }
+
+// // DOCUMENT
+// if (isDocument) {
+
+//   // TXT files may be transcript
+//   if (fileName.endsWith(".txt")) {
+
+//     const reader = new FileReader();
+
+//     reader.onload = () => {
+
+//       const text = reader.result as string;
+
+//       if (text.includes("# VIDEO_ID:")) {
+
+//         this.uploadTranscript();
+
+//       } else {
+
+//         this.generateVideoFromDocument();
+
+//       }
+
+//     };
+
+//     reader.readAsText(file);
+
+//   } else {
+
+//     this.generateVideoFromDocument();
+
+//   }
+
+//   return;
+// }
+
+// alert("Unsupported file type");
+
+// }
+uploadFile() {
+
+this.videoUrl = '';
+this.transcriptText = '';
+this.downloadUrl = '';
+
+
+if (!this.selectedFile) {
+alert("Please select a file");
+return;
+}
+
+const file = this.selectedFile;
+const fileName = file.name.toLowerCase();
+
+const isDocument =
+fileName.endsWith(".txt") ||
+fileName.endsWith(".pdf") ||
+fileName.endsWith(".docx");
+
+// DOCUMENT FILE
+if (isDocument) {
+
+// TXT may be transcript
+if (fileName.endsWith(".txt")) {
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+
+    const text = reader.result as string;
+
+    // transcript detection
+    if (text.startsWith("# VIDEO_ID:")) {
+
+      this.uploadTranscript();
+
+    } else {
+
       this.generateVideoFromDocument();
-    }
-    else {
-      alert("Unsupported file type");
+
     }
 
+  };
+
+  reader.readAsText(file);
+
+} else {
+
+  // PDF or DOCX
+  this.generateVideoFromDocument();
+
+}
+
+return;
+
+}
+
+// EVERYTHING ELSE → treat as video
+this.uploadVideo();
+
+}
+
+uploadVideo() 
+{
+
+if (!this.selectedFile) return;
+
+if (this.progressTimer) {
+  clearInterval(this.progressTimer);
+}
+
+this.transcriptText = '';
+this.downloadUrl = '';
+this.videoUrl = '';
+this.progress = 0;
+this.offset = this.circumference;
+this.videoId = '';
+
+this.statusMessage = "Uploading video...";
+
+const formData = new FormData();
+formData.append("file", this.selectedFile);
+
+this.isUploading = true;
+
+this.http.post<any>(
+  `${API_BASE_URL}/upload-video`,
+  formData
+).subscribe({
+  next: (res) => {
+
+    this.videoId = res.video_id;
+    this.statusMessage = "Transcribing video...";
+    this.startProgressPolling();
+
+  },
+  error: (err) => {
+    console.error(err);
+    this.isUploading = false;
   }
+});
 
-  uploadVideo() {
+}
 
-    if (!this.selectedFile) return;
+uploadTranscript() {
 
-    if (this.progressTimer) {
-      clearInterval(this.progressTimer);
+  if (!this.selectedFile) return;
+
+  const formData = new FormData();
+  formData.append("file", this.selectedFile);
+
+  this.isUploading = true;
+  this.statusMessage = "Recovering original video...";
+
+  this.http.post<any>(
+    `${API_BASE_URL}/upload-transcript`,
+    formData
+  ).subscribe({
+
+    next: (res) => {
+
+      this.videoUrl =
+        `${API_BASE_URL}/download-video/${res.video_id}`;
+
+      this.statusMessage =
+        "Original video recovered successfully.";
+
+      this.isUploading = false;
+      this.cd.detectChanges();
+
+    },
+
+    error: (err) => {
+      console.error(err);
+      this.isUploading = false;
     }
 
-    this.transcriptText = '';
-    this.downloadUrl = '';
-    this.videoUrl = '';
-    this.progress = 0;
-    this.offset = this.circumference;
-    this.videoId = '';
+  });
 
-    this.statusMessage = "Uploading video...";
+}
 
-    const formData = new FormData();
-    formData.append("file", this.selectedFile);
+generateVideoFromDocument() {
 
-    this.isUploading = true;
+if (!this.selectedFile) return;
 
-    this.http.post<any>(
-      `${API_BASE_URL}/upload-video`,
-      formData
-    ).subscribe({
-      next: (res) => {
+const formData = new FormData();
+formData.append("file", this.selectedFile);
 
-        this.videoId = res.video_id;
-        this.statusMessage = "Transcribing video...";
-        this.startProgressPolling();
+this.isUploading = true;
+this.transcriptText = '';
+this.videoUrl = '';
 
-      },
-      error: (err) => {
-        console.error(err);
-        this.isUploading = false;
+this.statusMessage = "Generating video from document...";
+
+this.http.post<any>(
+  `${API_BASE_URL}/generate-video-from-document`,
+  formData
+).subscribe({
+  next: (res) => {
+
+    this.videoUrl =
+      `${API_BASE_URL}${res.download_url}`;
+
+    this.statusMessage = "Video generated successfully.";
+
+    this.isUploading = false;
+    this.cd.detectChanges();
+
+  },
+  error: (err) => {
+    console.error(err);
+    this.isUploading = false;
+  }
+});
+
+}
+
+startProgressPolling() {
+
+
+this.progressTimer = setInterval(() => {
+
+  this.http.get<any>(`${API_BASE_URL}/progress/${this.videoId}`)
+    .subscribe(res => {
+
+      this.progress = res.progress;
+
+      this.offset =
+        this.circumference -
+        (this.progress / 100) * this.circumference;
+
+      this.cd.detectChanges();
+
+      if (this.progress >= 100) {
+
+        clearInterval(this.progressTimer);
+
+        const transcriptApi =
+          `${API_BASE_URL}/transcript/${this.videoId}`;
+
+        this.http.get<any>(transcriptApi)
+          .subscribe(data => {
+
+            this.transcriptText = data.transcript;
+
+            this.downloadUrl =
+              `${API_BASE_URL}/download/${this.videoId}`;
+
+            this.statusMessage = "Transcription completed.";
+
+            this.isUploading = false;
+
+            this.cd.detectChanges();
+
+          });
+
       }
-    });
-  }
 
-  generateVideoFromDocument() {
-
-    if (!this.selectedFile) return;
-
-    const formData = new FormData();
-    formData.append("file", this.selectedFile);
-
-    this.isUploading = true;
-    this.transcriptText = '';
-    this.videoUrl = '';
-
-    this.statusMessage = "Generating video from document...";
-
-    this.http.post<any>(
-      `${API_BASE_URL}/generate-video-from-document`,
-      formData
-    ).subscribe({
-      next: (res) => {
-
-        this.videoUrl =
-          `${API_BASE_URL}${res.download_url}`;
-
-        this.statusMessage = "Video generated successfully.";
-
-        this.isUploading = false;
-        this.cd.detectChanges();
-
-      },
-      error: (err) => {
-        console.error(err);
-        this.isUploading = false;
-      }
     });
 
-  }
+}, 500);
 
-  startProgressPolling() {
-
-    this.progressTimer = setInterval(() => {
-
-      this.http.get<any>(`${API_BASE_URL}/progress/${this.videoId}`)
-        .subscribe(res => {
-
-          this.progress = res.progress;
-
-          this.offset =
-            this.circumference -
-            (this.progress / 100) * this.circumference;
-
-          this.cd.detectChanges();
-
-          if (this.progress >= 100) {
-
-            clearInterval(this.progressTimer);
-
-            const transcriptApi =
-              `${API_BASE_URL}/transcript/${this.videoId}`;
-
-            this.http.get<any>(transcriptApi)
-              .subscribe(data => {
-
-                this.transcriptText = data.transcript;
-
-                this.downloadUrl =
-                  `${API_BASE_URL}/download/${this.videoId}`;
-
-                this.statusMessage = "Transcription completed.";
-
-                this.isUploading = false;
-
-                this.cd.detectChanges();
-
-              });
-
-          }
-
-        });
-
-    }, 500);
-
-  }
+}
 
 }

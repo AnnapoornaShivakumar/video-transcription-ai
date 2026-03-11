@@ -1,9 +1,10 @@
-from moviepy.editor import *
+# from moviepy.editor import *
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
 import uuid
 import os
 
-VIDEO_FOLDER = "static/videos"
-IMAGE_FOLDER = "static/images"
+VIDEO_FOLDER = "data/videos"
+# IMAGE_FOLDER = "static/images"
 
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 

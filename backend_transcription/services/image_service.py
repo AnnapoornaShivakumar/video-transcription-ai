@@ -4,11 +4,11 @@ import os
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 
-IMAGE_FOLDER = "static/images"
+# IMAGE_FOLDER = "static/images"
 
-os.makedirs(IMAGE_FOLDER, exist_ok=True)
+# os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-def fetch_image(query):
+def fetch_image(query, image_folder):
 
     url = "https://api.pexels.com/v1/search"
 
@@ -33,7 +33,7 @@ def fetch_image(query):
     img_data = requests.get(img_url).content
 
     filename = f"{uuid.uuid4()}.jpg"
-    path = os.path.join(IMAGE_FOLDER, filename)
+    path = os.path.join(image_folder, filename)
 
     with open(path, "wb") as f:
         f.write(img_data)

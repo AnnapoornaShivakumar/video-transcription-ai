@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+
+  backend:
+    build: ./backend_transcription
+    container_name: video_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend_transcription/data:/app/data
+    restart: always
+
+  frontend:
+    build: ./frontend_transcription
+    container_name: video_frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend

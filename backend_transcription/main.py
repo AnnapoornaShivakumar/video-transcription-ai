@@ -9,7 +9,6 @@ from faster_whisper import WhisperModel
 from fastapi.middleware.cors import CORSMiddleware
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from torch import chunk
 from services.document_service import extract_text, split_text, create_slide
 from services.tts_service import generate_audio
 from services.video_service import create_video
@@ -18,6 +17,11 @@ from services.image_service import fetch_image
 
 from dotenv import load_dotenv
 load_dotenv()
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+VIDEO_FOLDER = BASE_DIR / "data" / "videos"
 
 progress_tracker={}
 # FastAPI app initialization
@@ -33,16 +37,18 @@ app.add_middleware(
 # Folder configuration
 # UPLOAD_FOLDER = "uploads"
 # TRANSCRIPT_FOLDER = "transcripts"
+DATA_FOLDER = "data"
 
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
-TRANSCRIPT_FOLDER = os.getenv("TRANSCRIPT_FOLDER", "transcripts")
+UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "uploads")
+TRANSCRIPT_FOLDER = os.path.join(DATA_FOLDER, "transcripts")
+# VIDEO_FOLDER = os.path.join(DATA_FOLDER, "videos")
+TEMP_FOLDER = os.path.join(DATA_FOLDER, "temp")
 
 # Create folders if they don't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TRANSCRIPT_FOLDER, exist_ok=True)
-
-# temp workspace for multi-user video generation
-os.makedirs("temp", exist_ok=True)
+os.makedirs(VIDEO_FOLDER, exist_ok=True)
+os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 print(" Upload folder:", UPLOAD_FOLDER)
 print("Transcript folder:", TRANSCRIPT_FOLDER)
@@ -404,7 +410,7 @@ async def upload_transcript(file: UploadFile = File(...)):
 async def generate_video_from_document(file: UploadFile = File(...)):
 
     file_id = str(uuid.uuid4())
-    file_path = f"uploads/{file_id}_{file.filename}"
+    file_path = os.path.join(UPLOAD_FOLDER, f"{file_id}_{file.filename}")
 
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
@@ -414,8 +420,10 @@ async def generate_video_from_document(file: UploadFile = File(...)):
 
     job_id = str(uuid.uuid4())
 
-    image_folder = f"temp/{job_id}/images"
-    audio_folder = f"temp/{job_id}/audio"
+    job_folder = os.path.join(TEMP_FOLDER, job_id)
+
+    image_folder = os.path.join(job_folder, "images")
+    audio_folder = os.path.join(job_folder, "audio")
 
     os.makedirs(image_folder, exist_ok=True)
     os.makedirs(audio_folder, exist_ok=True)
@@ -434,7 +442,7 @@ async def generate_video_from_document(file: UploadFile = File(...)):
         bullets = slide["bullets"]
         image_query = slide["image_query"]
 
-        image_path = fetch_image(image_query)
+        image_path = fetch_image(image_query, image_folder)
 
         slide_image = create_slide(title, bullets, image_path, image_folder)
 
@@ -468,9 +476,10 @@ async def generate_video_from_document(file: UploadFile = File(...)):
 
     # 🔹 CREATE VIDEO
     video_path = create_video(audio_files, image_folder)
-    shutil.rmtree(f"temp/{job_id}", ignore_errors=True)
+    shutil.rmtree(job_folder, ignore_errors=True)
 
-    video_id = os.path.basename(video_path)
+    # video_id = os.path.basename(video_path)
+    video_id = os.path.basename(video_path).replace(".mp4", "")
 
     return {
         "message": "Video generated successfully",
@@ -478,16 +487,25 @@ async def generate_video_from_document(file: UploadFile = File(...)):
         "download_url": f"/download-video/{video_id}"
     }
 
-@app.get("/download-video/{video_name}")
-def download_video(video_name: str):
+@app.get("/download-video/{video_id}")
+def download_video(video_id: str):
 
-    video_path = f"static/videos/{video_name}"
+    video_id = video_id.replace(".mp4", "")
 
-    if not os.path.exists(video_path):
-        return {"error": "Video not found"}
+    generated_video = VIDEO_FOLDER / f"{video_id}.mp4"
+    uploaded_video = Path(UPLOAD_FOLDER) / f"{video_id}.mp4"
+
+    if generated_video.exists():
+        video_path = generated_video
+
+    elif uploaded_video.exists():
+        video_path = uploaded_video
+
+    else:
+        raise HTTPException(status_code=404, detail="Video not found")
 
     return FileResponse(
-        video_path,
+        str(video_path),
         media_type="video/mp4",
-        filename=video_name
+        filename=f"{video_id}.mp4"
     )
